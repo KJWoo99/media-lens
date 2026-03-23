@@ -1,4 +1,5 @@
 .bkit/
+.claude/
 __pycache__/
 *.pyc
 *.pyo

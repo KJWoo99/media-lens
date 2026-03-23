@@ -30,9 +30,10 @@ try:
 except ImportError:
     pass
 
-MODEL_ID   = "google/siglip2-base-patch16-224"
+MODEL_ID   = "google/siglip2-so400m-patch14-384"
 MODEL_HASH = hashlib.md5(MODEL_ID.encode()).hexdigest()[:8]
-FEAT_DIM   = 768
+FEAT_DIM   = 1152
+IMG_SIZE   = 384
 
 # transformers 5.x bug: TOKENIZER_MAPPING_NAMES['siglip'] is None, causing
 # AutoTokenizer to call None.replace() when resolving the tokenizer class.
@@ -64,15 +65,15 @@ def _get_batch_size(trt=False):
     try:
         total_gb = torch.cuda.get_device_properties(0).total_memory / (1024 ** 3)
         if trt:
-            if total_gb >= 10: return 128
-            elif total_gb >= 7: return 96
-            elif total_gb >= 5: return 64
-            else:               return 32
+            if total_gb >= 10: return 48
+            elif total_gb >= 7: return 32
+            elif total_gb >= 5: return 16
+            else:               return 8
         else:
-            if total_gb >= 10: return 64
-            elif total_gb >= 7: return 48
-            elif total_gb >= 5: return 32
-            else:               return 16
+            if total_gb >= 10: return 24
+            elif total_gb >= 7: return 16
+            elif total_gb >= 5: return 8
+            else:               return 4
     except Exception:
         return 16 if trt else 8
 
@@ -81,12 +82,12 @@ def _get_batch_size(trt=False):
 
 def _trt_engine_path(gpu_tag):
     os.makedirs(CACHE_DIR, exist_ok=True)
-    return os.path.join(CACHE_DIR, f"siglip2_base_fp16_{gpu_tag}.engine")
+    return os.path.join(CACHE_DIR, f"siglip2_so400m_fp16_{gpu_tag}.engine")
 
 
 def _trt_onnx_path():
     os.makedirs(CACHE_DIR, exist_ok=True)
-    return os.path.join(CACHE_DIR, "siglip2_base_image_encoder.onnx")
+    return os.path.join(CACHE_DIR, "siglip2_so400m_image_encoder.onnx")
 
 
 class _SigLIP2VisionWrapper(torch.nn.Module):
@@ -98,7 +99,7 @@ class _SigLIP2VisionWrapper(torch.nn.Module):
 
     def forward(self, pixel_values):
         outputs = self.vision_model(pixel_values=pixel_values)
-        return outputs.pooler_output  # (B, 768)
+        return outputs.pooler_output  # (B, 1152)
 
 
 def _export_siglip2_onnx(onnx_file):
@@ -126,7 +127,7 @@ def _export_siglip2_onnx(onnx_file):
     try:
         wrapper = _SigLIP2VisionWrapper(vision_export)
         wrapper.eval()
-        dummy = torch.randn(1, 3, 224, 224)
+        dummy = torch.randn(1, 3, IMG_SIZE, IMG_SIZE)
         with torch.no_grad():
             torch.onnx.export(
                 wrapper, dummy, onnx_file,
@@ -155,7 +156,7 @@ def _build_siglip2_trt(onnx_file, engine_file):
     config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 30)
     config.set_flag(trt.BuilderFlag.FP16)
     profile = builder.create_optimization_profile()
-    profile.set_shape("pixel_values", (1, 3, 224, 224), (32, 3, 224, 224), (128, 3, 224, 224))
+    profile.set_shape("pixel_values", (1, 3, IMG_SIZE, IMG_SIZE), (32, 3, IMG_SIZE, IMG_SIZE), (64, 3, IMG_SIZE, IMG_SIZE))
     config.add_optimization_profile(profile)
     serialized = builder.build_serialized_network(network, config)
     if serialized is None:
@@ -193,7 +194,7 @@ class TensorRTSigLIP2Vision:
             self._max_batch = 96
 
     def __call__(self, pixel_values: torch.Tensor) -> np.ndarray:
-        """pixel_values: CUDA float32 (N,3,224,224) → numpy (N,768)
+        """pixel_values: CUDA float32 (N,3,384,384) → numpy (N,1152)
         Always runs at max_batch size (padding) so Myelin graph stays loaded."""
         n = pixel_values.shape[0]
         dev = pixel_values.device
@@ -209,12 +210,12 @@ class TensorRTSigLIP2Vision:
         """Pad chunk to max_batch, infer, return only the real rows."""
         real_n = chunk.shape[0]
         if real_n < self._max_batch:
-            pad = torch.zeros(self._max_batch - real_n, 3, 224, 224,
+            pad = torch.zeros(self._max_batch - real_n, 3, IMG_SIZE, IMG_SIZE,
                               dtype=chunk.dtype, device=dev)
             chunk = torch.cat([chunk, pad], dim=0)
         chunk = chunk.contiguous()
         output = torch.empty((self._max_batch, FEAT_DIM), dtype=torch.float32, device=dev)
-        self.context.set_input_shape("pixel_values", (self._max_batch, 3, 224, 224))
+        self.context.set_input_shape("pixel_values", (self._max_batch, 3, IMG_SIZE, IMG_SIZE))
         self.context.set_tensor_address("pixel_values", chunk.data_ptr())
         self.context.set_tensor_address("pooler_output", output.data_ptr())
         self.context.execute_async_v3(stream_handle=self._stream.cuda_stream)
@@ -281,7 +282,7 @@ class SigLIP2Engine:
             self.processor = _build_processor(cache_dir=MODEL_DIR, local_files_only=True)
         except (OSError, AttributeError, TypeError, ValueError):
             if progress_callback:
-                progress_callback("Downloading SigLIP2 model (~340 MB)...")
+                progress_callback("Downloading SigLIP2 model (~900 MB)...")
             self.model = SiglipModel.from_pretrained(
                 MODEL_ID, cache_dir=MODEL_DIR
             ).to("cpu").eval()
@@ -406,7 +407,7 @@ class SigLIP2Engine:
     # ── Batch embedding ─────────────────────────────────────────────────
 
     def get_image_embeddings_batch(self, paths):
-        """Compute embeddings for a list of paths. Returns {path: tensor(1,768)}."""
+        """Compute embeddings for a list of paths. Returns {path: tensor(1,1152)}."""
         results = {}
 
         # Memory cache hits
@@ -605,7 +606,7 @@ class SigLIP2Engine:
             query_emb = self._encode_images_trt([img])
         else:
             query_emb = self._encode_images_pt([img])
-        query_emb_dev = query_emb.to(self.device)  # (1, 768)
+        query_emb_dev = query_emb.to(self.device)  # (1, 1152)
         query_path_str = str(query_image_path)
 
         results = []

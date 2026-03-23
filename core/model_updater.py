@@ -19,7 +19,7 @@ _VERSION_FILE = Path(MODEL_DIR) / ".model_versions.json"
 HF_MODELS = [
     ("apple/DFN5B-CLIP-ViT-H-14-378", "CLIP"),
     ("Helsinki-NLP/opus-mt-ko-en", "번역 (MarianMT)"),
-    ("google/siglip2-base-patch16-224", "SigLIP2"),
+    ("google/siglip2-so400m-patch14-384", "SigLIP2"),
 ]
 HUB_REPOS = [
     ("facebookresearch/dinov2", "DINOv2"),
@@ -28,7 +28,7 @@ HUB_REPOS = [
 # Mapping from model ID to TRT engine filename prefix
 _TRT_ENGINE_PREFIXES = {
     "apple/DFN5B-CLIP-ViT-H-14-378": "clip_dfn5b_vith_fp16_",
-    "google/siglip2-base-patch16-224": "siglip2_base_fp16_",
+    "google/siglip2-so400m-patch14-384": "siglip2_so400m_fp16_",
     "facebookresearch/dinov2": "dinov2_vitb14_fp16_",
 }
 

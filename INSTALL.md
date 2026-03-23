@@ -112,7 +112,7 @@ python main.py
 | 모델 | 크기 | 용도 |
 |------|------|------|
 | `apple/DFN5B-CLIP-ViT-H-14-378` | ~3.5 GB | 이미지 검색 |
-| `google/siglip2-base-patch16-224` | ~340 MB | 이미지 검색 Beta |
+| `google/siglip2-so400m-patch14-384` | ~900 MB | 이미지 검색 Beta |
 | `Helsinki-NLP/opus-mt-ko-en` | ~300 MB | 한국어 번역 (CLIP용) |
 | `facebookresearch/dinov2` (dinov2_vitb14) | ~330 MB | 이미지 중복 검출 |
 

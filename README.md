@@ -27,11 +27,11 @@
 
 Google SigLIP2 기반 시맨틱 검색. 번역 모델 없이 한국어/영어 네이티브 지원.
 
-- **모델**: `google/siglip2-base-patch16-224` (768차원 임베딩)
+- **모델**: `google/siglip2-so400m-patch14-384` (1152차원 임베딩)
 - **오프라인 우선**: 모델 로컬 `models/` 디렉토리 우선 로드
 - **네이티브 다국어**: 한국어/영어를 번역 없이 직접 처리
 - **추론 엔진**: 이미지 인코더 TensorRT FP16 > PyTorch 자동 폴백 (텍스트 인코더는 PyTorch)
-- **배치 처리**: GPU VRAM 기반 동적 배치 크기 (TRT: 8GB→96, 12GB→128 / PyTorch: 8GB→48, 12GB→64)
+- **배치 처리**: GPU VRAM 기반 동적 배치 크기 (TRT: 8GB→32, 12GB→48 / PyTorch: 8GB→16, 12GB→24)
 - **OOM 복구**: GPU 메모리 부족 시 배치 크기 자동 축소 후 재시도
 - **캐싱**: CLIP과 동일한 SQLite 캐시 테이블 공유 (model_hash로 구분)
 - **검색 모드**: 텍스트 검색 + 이미지-by-이미지 검색 모두 지원
