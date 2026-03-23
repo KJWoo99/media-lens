@@ -1,0 +1,12 @@
+.bkit/
+__pycache__/
+*.pyc
+*.pyo
+_cache/
+_engine_cache/
+_config/
+*.log
+*.egg-info/
+dist/
+build/
+models/
