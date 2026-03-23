@@ -250,6 +250,9 @@ class CLIPEngine:
         self.cache = CacheManager()
         self.initialized = False
         self.batch_size = _get_clip_batch_size()
+        # Preload translation subprocess in background so first search is instant
+        import threading
+        threading.Thread(target=self.translator._ensure_proc, daemon=True).start()
         self.is_processing = False
         self._load_id = 0
 
@@ -422,6 +425,8 @@ class CLIPEngine:
     def compute_text_features(self, text):
         """Compute text embedding, auto-translating Korean."""
         translated = self.translator.translate(text)
+        if self.translator.contains_korean(text):
+            print(f"[CLIP 번역] '{text}' → '{translated}'")
         inputs = self.processor(text=[translated], return_tensors="pt", padding=True).to(self.device)
         with torch.no_grad():
             outputs = self.model.text_model(**inputs)

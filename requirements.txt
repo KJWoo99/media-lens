@@ -13,3 +13,5 @@ onnx
 onnxruntime-gpu
 onnxscript
 send2trash
+sentencepiece
+sacremoses
