@@ -91,7 +91,6 @@ class MainWindow(QMainWindow):
 
         nav_items = [
             ("\U0001F50D", "Image Search"),
-            ("\U0001F50D", "Image Search (beta)"),
             ("\U0001F5BC\uFE0F", "Image Duplicate"),
             ("\U0001F3AC", "Video Duplicate"),
             ("\U0001F5C4\uFE0F", "Cache"),

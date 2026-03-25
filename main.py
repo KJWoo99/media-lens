@@ -75,7 +75,6 @@ qInstallMessageHandler(_qt_msg_handler)
 from ui.styles import GLOBAL_STYLESHEET
 from ui.main_window import MainWindow
 from ui.image_search_page import ImageSearchPage
-from ui.image_search_siglip_page import ImageSearchSigLIPPage
 from ui.image_duplicate_page import ImageDuplicatePage
 from ui.video_duplicate_page import VideoDuplicatePage
 from ui.cache_page import CachePage
@@ -86,7 +85,6 @@ from ui.cache_page import CachePage
 import transformers  # noqa: F401
 
 from core.clip_engine import CLIPEngine
-from core.metaclip_engine import MetaCLIPEngine
 from core.resnet_engine import ResNetEngine
 from core.video_analyzer import VideoAnalyzer
 from core.cache_manager import CacheManager
@@ -123,17 +121,13 @@ def main():
     window = MainWindow()
 
     # Create engines
-    clip     = CLIPEngine()
-    metaclip = MetaCLIPEngine()
-    resnet   = ResNetEngine()
-    video   = VideoAnalyzer(use_gpu=True)
+    clip   = CLIPEngine()
+    resnet = ResNetEngine()
+    video  = VideoAnalyzer(use_gpu=True)
 
     # Create pages
     search_page = ImageSearchPage()
     search_page.set_engine(clip)
-
-    siglip_page = ImageSearchSigLIPPage()
-    siglip_page.set_engine(metaclip)
 
     dup_page = ImageDuplicatePage()
     dup_page.set_engine(resnet)
@@ -145,24 +139,20 @@ def main():
 
     # Add pages (order must match nav_items in main_window.py)
     window.add_page(search_page)
-    window.add_page(siglip_page)
     window.add_page(dup_page)
     window.add_page(video_page)
     window.add_page(cache_page)
 
     # GPU memory management: only keep active tab's model on GPU
-    window.set_engines([clip, metaclip, resnet, None, None])
+    window.set_engines([clip, resnet, None, None])
 
     # After each model finishes loading, offload to CPU if not on active tab
     if search_page._active_thread:
         search_page._active_thread.finished.connect(
             lambda ok, _msg: window.notify_engine_ready(0) if ok else None)
-    if siglip_page._active_thread:
-        siglip_page._active_thread.finished.connect(
-            lambda ok, _msg: window.notify_engine_ready(1) if ok else None)
     if dup_page._active_thread:
         dup_page._active_thread.finished.connect(
-            lambda _backend: window.notify_engine_ready(2))
+            lambda _backend: window.notify_engine_ready(1))
 
     # Default to first page
     window.select_page(0)

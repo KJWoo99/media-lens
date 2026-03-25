@@ -19,7 +19,6 @@ _VERSION_FILE = Path(MODEL_DIR) / ".model_versions.json"
 HF_MODELS = [
     ("apple/DFN5B-CLIP-ViT-H-14-378", "CLIP"),
     ("Helsinki-NLP/opus-mt-ko-en", "번역 (MarianMT)"),
-    ("facebook/metaclip-2-worldwide-huge-quickgelu", "MetaCLIP2"),
 ]
 HUB_REPOS = [
     ("facebookresearch/dinov2", "DINOv2"),
@@ -28,7 +27,6 @@ HUB_REPOS = [
 # Mapping from model ID to TRT engine filename prefix
 _TRT_ENGINE_PREFIXES = {
     "apple/DFN5B-CLIP-ViT-H-14-378": "clip_dfn5b_vith_fp16_",
-    "facebook/metaclip-2-worldwide-huge-quickgelu": "metaclip2_worldwide_fp16_",
     "facebookresearch/dinov2": "dinov2_vitb14_fp16_",
 }
 

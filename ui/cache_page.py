@@ -15,10 +15,8 @@ from ui.components import SectionHeader
 from core.cache_manager import CacheManager
 
 # Model hashes — must match values in the engine files
-_CLIP_MODEL_ID    = "apple/DFN5B-CLIP-ViT-H-14-378"
-_METACLIP2_MODEL_ID = "facebook/metaclip-2-worldwide-huge-quickgelu"
+_CLIP_MODEL_ID = "apple/DFN5B-CLIP-ViT-H-14-378"
 _CLIP_HASH     = hashlib.md5(_CLIP_MODEL_ID.encode()).hexdigest()[:8]
-_METACLIP2_HASH = hashlib.md5(_METACLIP2_MODEL_ID.encode()).hexdigest()[:8]
 
 
 class _ClearThread(QThread):
@@ -96,17 +94,15 @@ class CachePage(QWidget):
         cards_grid = QGridLayout()
         cards_grid.setSpacing(12)
 
-        self.card_clip    = _StatCard("CLIP")
-        self.card_siglip2 = _StatCard("MetaCLIP2")
-        self.card_dinov2  = _StatCard("DINOv2")
-        self.card_video   = _StatCard("Video")
-        self.card_db      = _StatCard("DB Size")
+        self.card_clip   = _StatCard("CLIP")
+        self.card_dinov2 = _StatCard("DINOv2")
+        self.card_video  = _StatCard("Video")
+        self.card_db     = _StatCard("DB Size")
 
-        cards_grid.addWidget(self.card_clip,    0, 0)
-        cards_grid.addWidget(self.card_siglip2, 0, 1)
-        cards_grid.addWidget(self.card_dinov2,  0, 2)
-        cards_grid.addWidget(self.card_video,   0, 3)
-        cards_grid.addWidget(self.card_db,      0, 4)
+        cards_grid.addWidget(self.card_clip,   0, 0)
+        cards_grid.addWidget(self.card_dinov2, 0, 1)
+        cards_grid.addWidget(self.card_video,  0, 2)
+        cards_grid.addWidget(self.card_db,     0, 3)
         layout.addLayout(cards_grid)
 
         # ── Clear buttons ────────────────────────────────────────────────
@@ -118,12 +114,6 @@ class CachePage(QWidget):
         self.btn_clip.setFixedHeight(34)
         self.btn_clip.clicked.connect(self._clear_clip)
         btn_row.addWidget(self.btn_clip)
-
-        self.btn_siglip2 = QPushButton("Clear MetaCLIP2")
-        self.btn_siglip2.setObjectName("GhostButton")
-        self.btn_siglip2.setFixedHeight(34)
-        self.btn_siglip2.clicked.connect(self._clear_siglip2)
-        btn_row.addWidget(self.btn_siglip2)
 
         self.btn_dinov2 = QPushButton("Clear DINOv2")
         self.btn_dinov2.setObjectName("GhostButton")
@@ -170,16 +160,13 @@ class CachePage(QWidget):
             stats = cache.get_stats()
             by_model = cache.get_clip_count_by_model()
 
-            clip_count    = by_model.get(_CLIP_HASH, 0)
-            siglip2_count = by_model.get(_METACLIP2_HASH, 0)
-            dinov2_count  = stats.get('image_feature_cache', 0)
-            video_count   = stats.get('video_cache', 0)
-            db_mb         = stats.get('db_size_mb', 0)
+            clip_count   = by_model.get(_CLIP_HASH, 0)
+            dinov2_count = stats.get('image_feature_cache', 0)
+            video_count  = stats.get('video_cache', 0)
+            db_mb        = stats.get('db_size_mb', 0)
 
             self.card_clip.set_value(
                 f"{clip_count:,}", "embeddings")
-            self.card_siglip2.set_value(
-                f"{siglip2_count:,}", "embeddings")
             self.card_dinov2.set_value(
                 f"{dinov2_count:,}", "features")
             self.card_video.set_value(
@@ -192,7 +179,7 @@ class CachePage(QWidget):
             self.status_lbl.setText(f"Error: {e}")
 
     def _set_buttons_enabled(self, enabled: bool):
-        for btn in (self.btn_clip, self.btn_siglip2, self.btn_dinov2,
+        for btn in (self.btn_clip, self.btn_dinov2,
                     self.btn_video, self.btn_invalid, self.btn_all, self.refresh_btn):
             btn.setEnabled(enabled)
 
@@ -225,9 +212,6 @@ class CachePage(QWidget):
     def _clear_clip(self):
         self._run_clear("CLIP", lambda: CacheManager().clear_clip_cache(_CLIP_HASH))
 
-    def _clear_siglip2(self):
-        self._run_clear("MetaCLIP2", lambda: CacheManager().clear_clip_cache(_METACLIP2_HASH))
-
     def _clear_dinov2(self):
         self._run_clear("DINOv2", lambda: CacheManager().clear_image_features())
 
@@ -243,7 +227,7 @@ class CachePage(QWidget):
     def _clear_all(self):
         reply = QMessageBox.question(
             self, "Confirm Clear All",
-            "Delete ALL cached data (CLIP, MetaCLIP2, DINOv2, Video)?\n"
+            "Delete ALL cached data (CLIP, DINOv2, Video)?\n"
             "Models will need to re-process images on next use.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No)
