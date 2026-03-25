@@ -543,10 +543,14 @@ class ImageDuplicatePage(QWidget):
         if not self._filtered:
             QMessageBox.warning(self, "Warning", "No results to export")
             return
+        from core.config import get_folder, set_folder
+        last_dir = get_folder("export_dir") or ""
+        default_path = os.path.join(last_dir, "duplicate_results.txt") if last_dir else "duplicate_results.txt"
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export Results", "duplicate_results.txt", "Text files (*.txt)")
+            self, "Export Results", default_path, "Text files (*.txt)")
         if not path:
             return
+        set_folder("export_dir", os.path.dirname(path))
         try:
             with open(path, 'w', encoding='utf-8') as f:
                 f.write(f"Image Duplicate Detection Results\n{'=' * 60}\n")
