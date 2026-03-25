@@ -16,9 +16,9 @@ from core.cache_manager import CacheManager
 
 # Model hashes — must match values in the engine files
 _CLIP_MODEL_ID    = "apple/DFN5B-CLIP-ViT-H-14-378"
-_SIGLIP2_MODEL_ID = "google/siglip2-base-patch16-224"
-_CLIP_HASH    = hashlib.md5(_CLIP_MODEL_ID.encode()).hexdigest()[:8]
-_SIGLIP2_HASH = hashlib.md5(_SIGLIP2_MODEL_ID.encode()).hexdigest()[:8]
+_METACLIP2_MODEL_ID = "facebook/metaclip-2-worldwide-huge-quickgelu"
+_CLIP_HASH     = hashlib.md5(_CLIP_MODEL_ID.encode()).hexdigest()[:8]
+_METACLIP2_HASH = hashlib.md5(_METACLIP2_MODEL_ID.encode()).hexdigest()[:8]
 
 
 class _ClearThread(QThread):
@@ -97,7 +97,7 @@ class CachePage(QWidget):
         cards_grid.setSpacing(12)
 
         self.card_clip    = _StatCard("CLIP")
-        self.card_siglip2 = _StatCard("SigLIP2")
+        self.card_siglip2 = _StatCard("MetaCLIP2")
         self.card_dinov2  = _StatCard("DINOv2")
         self.card_video   = _StatCard("Video")
         self.card_db      = _StatCard("DB Size")
@@ -119,7 +119,7 @@ class CachePage(QWidget):
         self.btn_clip.clicked.connect(self._clear_clip)
         btn_row.addWidget(self.btn_clip)
 
-        self.btn_siglip2 = QPushButton("Clear SigLIP2")
+        self.btn_siglip2 = QPushButton("Clear MetaCLIP2")
         self.btn_siglip2.setObjectName("GhostButton")
         self.btn_siglip2.setFixedHeight(34)
         self.btn_siglip2.clicked.connect(self._clear_siglip2)
@@ -171,7 +171,7 @@ class CachePage(QWidget):
             by_model = cache.get_clip_count_by_model()
 
             clip_count    = by_model.get(_CLIP_HASH, 0)
-            siglip2_count = by_model.get(_SIGLIP2_HASH, 0)
+            siglip2_count = by_model.get(_METACLIP2_HASH, 0)
             dinov2_count  = stats.get('image_feature_cache', 0)
             video_count   = stats.get('video_cache', 0)
             db_mb         = stats.get('db_size_mb', 0)
@@ -226,7 +226,7 @@ class CachePage(QWidget):
         self._run_clear("CLIP", lambda: CacheManager().clear_clip_cache(_CLIP_HASH))
 
     def _clear_siglip2(self):
-        self._run_clear("SigLIP2", lambda: CacheManager().clear_clip_cache(_SIGLIP2_HASH))
+        self._run_clear("MetaCLIP2", lambda: CacheManager().clear_clip_cache(_METACLIP2_HASH))
 
     def _clear_dinov2(self):
         self._run_clear("DINOv2", lambda: CacheManager().clear_image_features())
@@ -243,7 +243,7 @@ class CachePage(QWidget):
     def _clear_all(self):
         reply = QMessageBox.question(
             self, "Confirm Clear All",
-            "Delete ALL cached data (CLIP, SigLIP2, DINOv2, Video)?\n"
+            "Delete ALL cached data (CLIP, MetaCLIP2, DINOv2, Video)?\n"
             "Models will need to re-process images on next use.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No)

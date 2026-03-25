@@ -424,7 +424,7 @@ class ImageSearchSigLIPPage(QWidget):
 
     def _browse_query_image(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select Query Image", "",
+            self, "Select Query Image", self.folder_picker.path() or "",
             "Images (*.jpg *.jpeg *.png *.bmp *.gif *.webp *.tif *.tiff)")
         if path:
             self.image_path_edit.setText(path)

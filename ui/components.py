@@ -61,7 +61,8 @@ class FolderPicker(QWidget):
                 self.path_edit.setText(saved)
 
     def _browse(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select Folder")
+        start = self.path_edit.text() or ""
+        folder = QFileDialog.getExistingDirectory(self, "Select Folder", start)
         if folder:
             self._set_and_persist(folder)
 
