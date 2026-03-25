@@ -86,7 +86,7 @@ from ui.cache_page import CachePage
 import transformers  # noqa: F401
 
 from core.clip_engine import CLIPEngine
-from core.siglip2_engine import SigLIP2Engine
+from core.metaclip_engine import MetaCLIPEngine
 from core.resnet_engine import ResNetEngine
 from core.video_analyzer import VideoAnalyzer
 from core.cache_manager import CacheManager
@@ -123,9 +123,9 @@ def main():
     window = MainWindow()
 
     # Create engines
-    clip    = CLIPEngine()
-    siglip2 = SigLIP2Engine()
-    resnet  = ResNetEngine()
+    clip     = CLIPEngine()
+    metaclip = MetaCLIPEngine()
+    resnet   = ResNetEngine()
     video   = VideoAnalyzer(use_gpu=True)
 
     # Create pages
@@ -133,7 +133,7 @@ def main():
     search_page.set_engine(clip)
 
     siglip_page = ImageSearchSigLIPPage()
-    siglip_page.set_engine(siglip2)
+    siglip_page.set_engine(metaclip)
 
     dup_page = ImageDuplicatePage()
     dup_page.set_engine(resnet)
@@ -151,7 +151,7 @@ def main():
     window.add_page(cache_page)
 
     # GPU memory management: only keep active tab's model on GPU
-    window.set_engines([clip, siglip2, resnet, None, None])
+    window.set_engines([clip, metaclip, resnet, None, None])
 
     # After each model finishes loading, offload to CPU if not on active tab
     if search_page._active_thread:

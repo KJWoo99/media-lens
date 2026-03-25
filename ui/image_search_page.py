@@ -284,8 +284,7 @@ class ImageSearchPage(QWidget):
         if ok:
             self.model_status.setText(msg)
             self.model_status.setStyleSheet(f"font-size: 12px; color: {COLORS['green']};")
-            if self.folder_picker.path():
-                self._load_folder()
+            pass  # Auto-load removed — user must press Load Folder manually
         else:
             self.model_status.setText(f"Error: {msg}")
             self.model_status.setStyleSheet(f"font-size: 12px; color: {COLORS['red']};")

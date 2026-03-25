@@ -1,6 +1,6 @@
-"""Image Search (beta) — SigLIP2 text-to-image search with TensorRT image encoder.
+"""Image Search (beta) — MetaCLIP2 text-to-image search with TensorRT image encoder.
 
-No translation model required: Korean/English supported natively by SigLIP2.
+No translation model required: 300+ languages natively supported by MetaCLIP2.
 """
 
 import os
@@ -140,7 +140,7 @@ class ImageSearchSigLIPPage(QWidget):
         header.addSpacing(6)
 
         # native-language note
-        lang_note = QLabel("Korean / English — no translation needed")
+        lang_note = QLabel("300+ languages — no translation needed")
         lang_note.setStyleSheet(
             f"font-size: 11px; color: {COLORS['text3']}; padding: 0 4px;")
         header.addWidget(lang_note)
@@ -303,7 +303,7 @@ class ImageSearchSigLIPPage(QWidget):
 
     def set_engine(self, engine):
         self.engine = engine
-        self.model_status.setText("Loading SigLIP2...")
+        self.model_status.setText("Loading MetaCLIP2...")
         self.model_status.setStyleSheet(
             f"font-size: 12px; color: {COLORS['yellow']};")
 
@@ -515,11 +515,10 @@ class ImageSearchSigLIPPage(QWidget):
                 img_label.setPixmap(pixmap)
             card_layout.addWidget(img_label)
 
-            # Score badge — SigLIP2 produces lower cosine similarities than CLIP ViT-H
-            # (sigmoid loss, smaller model), so thresholds are adjusted accordingly
+            # Score badge — MetaCLIP2 uses contrastive loss (same scale as CLIP)
             score_pct   = int(score * 100)
-            score_color = (COLORS['green']  if score > 0.20
-                           else COLORS['accent'] if score > 0.10
+            score_color = (COLORS['green']  if score > 0.85
+                           else COLORS['accent'] if score > 0.70
                            else COLORS['text2'])
             score_lbl = QLabel(f"{score_pct}%")
             score_lbl.setStyleSheet(

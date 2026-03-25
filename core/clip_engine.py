@@ -375,7 +375,8 @@ class CLIPEngine:
 
     def _encode_pytorch(self, images):
         """Encode a list of PIL images via PyTorch. Returns cpu tensor (N, feat_dim)."""
-        inputs = self.processor(images=images, return_tensors="pt").to(self.device)
+        actual_device = next(self.model.parameters()).device
+        inputs = self.processor(images=images, return_tensors="pt").to(actual_device)
         with torch.no_grad():
             outputs = self.model.vision_model(**inputs)
             feats = outputs.pooler_output if outputs.pooler_output is not None else outputs.last_hidden_state.mean(dim=1)
@@ -427,7 +428,8 @@ class CLIPEngine:
         translated = self.translator.translate(text)
         if self.translator.contains_korean(text):
             print(f"[CLIP 번역] '{text}' → '{translated}'")
-        inputs = self.processor(text=[translated], return_tensors="pt", padding=True).to(self.device)
+        actual_device = next(self.model.parameters()).device
+        inputs = self.processor(text=[translated], return_tensors="pt", padding=True).to(actual_device)
         with torch.no_grad():
             outputs = self.model.text_model(**inputs)
             feats = outputs.pooler_output if outputs.pooler_output is not None else outputs.last_hidden_state[:, -1, :]

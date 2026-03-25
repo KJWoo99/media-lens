@@ -350,6 +350,10 @@ class ImageDuplicatePage(QWidget):
         self._filtered = []
 
         recursive = self.recursive_check.isChecked()
+        # Save scan context for export (relative path calculation)
+        self._scan_recursive = recursive
+        self._scan_folder1   = folder
+        self._scan_folder2   = folder2
         thread = DetectionThread(self.engine, mode, folder, folder2, threshold, recursive)
         thread.progress.connect(self._on_progress)
         thread.finished.connect(self._on_done)
@@ -519,6 +523,22 @@ class ImageDuplicatePage(QWidget):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to delete: {e}")
 
+    def _rel_path(self, abs_path):
+        """Return relative path from scan root when subfolders mode is on,
+        otherwise just the filename."""
+        if not getattr(self, '_scan_recursive', False):
+            return os.path.basename(abs_path)
+        # Two-folder mode: try each base folder
+        for base in filter(None, [getattr(self, '_scan_folder1', None),
+                                   getattr(self, '_scan_folder2', None)]):
+            try:
+                rel = os.path.relpath(abs_path, base)
+                if not rel.startswith('..'):
+                    return rel.replace('\\', '/')
+            except ValueError:
+                pass
+        return os.path.basename(abs_path)
+
     def _export(self):
         if not self._filtered:
             QMessageBox.warning(self, "Warning", "No results to export")
@@ -532,7 +552,9 @@ class ImageDuplicatePage(QWidget):
                 f.write(f"Image Duplicate Detection Results\n{'=' * 60}\n")
                 f.write(f"Total pairs: {len(self._filtered)}\n\n")
                 for i, d in enumerate(self._filtered, 1):
-                    f.write(f"[{i}] {d['img1_name']} | {d['img2_name']}\n")
+                    name1 = self._rel_path(d['img1_path'])
+                    name2 = self._rel_path(d['img2_path'])
+                    f.write(f"[{i}] {name1} | {name2}\n")
                     f.write(f"    Similarity: {d['similarity']:.5f}\n")
                     f.write(f"    Same resolution: {'Yes' if d.get('same_resolution') else 'No'}\n\n")
             QMessageBox.information(self, "Exported", f"Saved to: {path}")
