@@ -11,3 +11,7 @@ _config/
 dist/
 build/
 models/
+.env
+.env.*
+venv/
+.venv/
