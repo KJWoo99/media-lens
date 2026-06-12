@@ -32,7 +32,7 @@ pip install -r requirements.txt
 |--------|------|
 | torch / torchvision | 딥러닝 프레임워크 (CUDA 12.8 빌드) |
 | PyQt6 | GUI 프레임워크 |
-| transformers | CLIP, SigLIP2, MarianMT 모델 로드 |
+| transformers | CLIP, MarianMT 모델 로드 |
 | Pillow | 이미지 처리 |
 | opencv-python | 컴퓨터 비전 |
 | numpy | 수치 연산 |
@@ -112,7 +112,6 @@ python main.py
 | 모델 | 크기 | 용도 |
 |------|------|------|
 | `apple/DFN5B-CLIP-ViT-H-14-378` | ~3.5 GB | 이미지 검색 |
-| `google/siglip2-so400m-patch14-384` | ~900 MB | 이미지 검색 Beta |
 | `Helsinki-NLP/opus-mt-ko-en` | ~300 MB | 한국어 번역 (CLIP용) |
 | `facebookresearch/dinov2` (dinov2_vitb14) | ~330 MB | 이미지 중복 검출 |
 
@@ -135,10 +134,6 @@ python main.py
 ```bash
 pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 ```
-
-### transformers 버전 호환 문제 (SigLIP2)
-
-SigLIP2는 `transformers 5.x`에서 GemmaTokenizer 관련 버그가 있습니다. 앱 내부에서 자동으로 패치되므로 별도 조치는 불필요합니다.
 
 ### 크래시 / 오류 진단
 

@@ -49,10 +49,9 @@ def _get_gpu_batch_size():
         return 32
 
 
-class ResNetEngine:
+class DuplicateEngine:
     """DINOv2-Base feature extraction with TensorRT > PyTorch fallback.
-    Uses single-process batched inference only (avoids CUDA multiprocessing issues on Windows).
-    Class name kept as ResNetEngine for UI compatibility."""
+    Uses single-process batched inference only (avoids CUDA multiprocessing issues on Windows)."""
 
     IMAGE_EXTENSIONS = ['*.jpg', '*.jpeg', '*.png', '*.bmp', '*.tif', '*.tiff', '*.webp']
 

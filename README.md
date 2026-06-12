@@ -23,23 +23,7 @@
 - **서브폴더 검색**: Subfolders 체크박스로 하위 폴더까지 재귀 검색
 - **UI**: 결과 개수 조절 (5~50), Min score 슬라이더 (실시간 결과 필터링), 썸네일 그리드, 클릭 시 원본 미리보기
 
-### 2. 이미지 검색 Beta (SigLIP2)
-
-Google SigLIP2 기반 시맨틱 검색. 번역 모델 없이 한국어/영어 네이티브 지원.
-
-- **모델**: `google/siglip2-so400m-patch14-384` (1152차원 임베딩)
-- **오프라인 우선**: 모델 로컬 `models/` 디렉토리 우선 로드
-- **네이티브 다국어**: 한국어/영어를 번역 없이 직접 처리
-- **추론 엔진**: 이미지 인코더 TensorRT FP16 > PyTorch 자동 폴백 (텍스트 인코더는 PyTorch)
-- **배치 처리**: GPU VRAM 기반 동적 배치 크기 (TRT: 8GB→32, 12GB→48 / PyTorch: 8GB→16, 12GB→24)
-- **OOM 복구**: GPU 메모리 부족 시 배치 크기 자동 축소 후 재시도
-- **캐싱**: CLIP과 동일한 SQLite 캐시 테이블 공유 (model_hash로 구분)
-- **검색 모드**: 텍스트 검색 + 이미지-by-이미지 검색 모두 지원
-- **서브폴더 검색**: 재귀 검색 지원
-- **점수 임계값**: green > 20%, accent > 10% (CLIP보다 낮음, sigmoid loss 특성)
-- **transformers 5.x 호환**: GemmaTokenizer 자동 패치
-
-### 3. 이미지 중복 검출 (DINOv2)
+### 2. 이미지 중복 검출 (DINOv2)
 
 자기지도 학습 기반 특징 벡터 비교로 중복/유사 이미지 탐지.
 
@@ -57,7 +41,7 @@ Google SigLIP2 기반 시맨틱 검색. 번역 모델 없이 한국어/영어 �
 - **진행 상태**: 단계별 상태 메시지 + ETA(예상 남은 시간) 실시간 표시
 - **안전한 중단/재시작**: Stop 후 폴더 변경 → 재스캔 시 이전 스레드 안전하게 정리
 
-### 4. 비디오 중복 검출 (Perceptual Hash)
+### 3. 비디오 중복 검출 (Perceptual Hash)
 
 중복, 동일 콘텐츠, 부분 일치 영상 탐지.
 
@@ -90,7 +74,6 @@ media_manager/
 │   ├── components.py                # 공용 위젯 (FolderPicker, InfoCard, StatusBar 등)
 │   ├── main_window.py               # 메인 윈도우 + 사이드바 네비게이션 + GPU 관리
 │   ├── image_search_page.py         # 이미지 검색 페이지 (CLIP)
-│   ├── image_search_siglip_page.py  # 이미지 검색 페이지 (SigLIP2 beta)
 │   ├── image_duplicate_page.py      # 이미지 중복 검출 페이지
 │   ├── video_duplicate_page.py      # 비디오 중복 검출 페이지
 │   ├── cache_page.py                # 캐시 통계 + 삭제 (5번째 탭)
@@ -101,8 +84,7 @@ media_manager/
 │   ├── model_updater.py             # 백그라운드 모델 업데이트 체커 + 다운로더
 │   ├── inference_engine.py          # TensorRT 엔진 빌드/캐시 + DINOv2 TRT + 공용 유틸
 │   ├── clip_engine.py               # CLIP 모델 래퍼 (TRT 서브프로세스 빌드)
-│   ├── siglip2_engine.py            # SigLIP2 모델 래퍼 (TRT 서브프로세스 빌드)
-│   ├── resnet_engine.py             # DINOv2 특징 추출 (TRT/PyTorch, ETA 표시)
+│   ├── duplicate_engine.py          # DINOv2 특징 추출 (TRT/PyTorch, ETA 표시)
 │   ├── video_analyzer.py            # 비디오 분석 엔진 (프레임 해시)
 │   ├── cache_manager.py             # 통합 SQLite 캐시 (3개 테이블, 배치 조회 지원)
 │   ├── config.py                    # JSON 폴더 경로 설정 저장
@@ -169,23 +151,6 @@ media_manager/
 검색: 코사인 유사도(텍스트/이미지 임베딩, 이미지 임베딩) -> 파노라마는 세그먼트별 max -> Top-K 결과
 ```
 
-### SigLIP2 (이미지 검색 Beta)
-
-```
-텍스트/이미지 쿼리 (한국어/영어 번역 없이 직접 처리)
-  -> SigLIP2 텍스트/이미지 인코더 -> 임베딩 (768차원)
-
-이미지 파일들
-  -> [배치 캐시 조회] SQLite WHERE IN 쿼리
-  -> [CPU 스레드 풀] PIL 로드 + 리사이즈 (최대 1024px) (4스레드 병렬)
-  -> SigLIP2 이미지 인코더 -> 임베딩 (768차원)
-     ├── TensorRT FP16 엔진 (8GB→96, 12GB→128)
-     └── PyTorch 모델 (폴백: 8GB→48, 12GB→64)
-  -> OOM 시 배치 크기 자동 축소 후 재시도
-
-검색: 코사인 유사도 -> Top-K 결과
-```
-
 ### 비디오 분석
 
 ```
@@ -211,13 +176,13 @@ media_manager/
 |--------|------|-----|
 | `video_cache` | 프레임 해시, 메타데이터, 길이, 해상도 | MD5(크기 + 수정시간 + 전체경로) |
 | `image_feature_cache` | DINOv2 768차원 특징 벡터 | MD5(크기 + 수정시간 + 전체경로) |
-| `clip_cache` | CLIP/SigLIP2 임베딩, 모델별 관리 | MD5(크기 + 수정시간 + 전체경로) + model_hash |
+| `clip_cache` | CLIP 임베딩, 모델별 관리 | MD5(크기 + 수정시간 + 전체경로) + model_hash |
 
 **캐시 무효화**: 파일 크기 또는 수정 시간이 변경되면 캐시가 자동 무효화. 파일 단위로 관리되므로 폴더에 이미지 추가/삭제 시 변경되지 않은 기존 파일은 캐시 재사용.
 
 배치 조회(`WHERE IN`) 및 배치 저장(`executemany`)으로 반복 스캔 시 I/O 최소화.
 
-**캐시 관리 탭**: 모델별 캐시 통계 (CLIP, SigLIP2, DINOv2, Video, DB 크기), 선택 삭제, 무효 항목 삭제, 전체 삭제. 시작 시 자동으로 삭제/변경된 파일의 캐시 엔트리 제거.
+**캐시 관리 탭**: 모델별 캐시 통계 (CLIP, DINOv2, Video, DB 크기), 선택 삭제, 무효 항목 삭제, 전체 삭제. 시작 시 자동으로 삭제/변경된 파일의 캐시 엔트리 제거.
 
 ---
 
@@ -225,7 +190,7 @@ media_manager/
 
 앱 시작 5초 후 백그라운드에서 자동으로 모델 업데이트를 체크:
 
-- **HuggingFace 모델**: SHA 비교로 업데이트 감지 (CLIP, MarianMT, SigLIP2)
+- **HuggingFace 모델**: SHA 비교로 업데이트 감지 (CLIP, MarianMT)
 - **torch.hub 모델**: GitHub API SHA 비교로 업데이트 감지 (DINOv2)
 - **업데이트 알림**: 다이얼로그로 알림, "지금 업데이트" 또는 "나중에" 선택
 - **다운로드 + 재시작**: 업데이트 다운로드 후 앱 자동 재시작

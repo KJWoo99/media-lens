@@ -347,7 +347,7 @@ class CacheManager:
             conn.execute('DELETE FROM image_feature_cache')
 
     def clear_clip_cache(self, model_hash=None):
-        """Delete CLIP/SigLIP2 embedding cache entries. Pass model_hash to clear one model only."""
+        """Delete CLIP embedding cache entries. Pass model_hash to clear one model only."""
         with self._conn() as conn:
             if model_hash:
                 conn.execute('DELETE FROM clip_cache WHERE model_hash=?', (model_hash,))

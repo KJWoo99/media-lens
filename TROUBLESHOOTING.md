@@ -74,7 +74,7 @@ transformers 5.x에서 `from_pretrained()` 시 weights를 meta tensor(빈 껍데
 단독 실행 시에는 정상 작동.
 
 **원인**
-transformers 5.x lazy loading + SigLIP2(GemmaTokenizer)/CLIP이 이미 로드된 상태에서 MarianMT weights가 materialized될 때 글로벌 상태 오염 발생.
+transformers 5.x lazy loading + CLIP이 이미 로드된 상태에서 MarianMT weights가 materialized될 때 글로벌 상태 오염 발생.
 `model.generate()`가 올바른 가중치 대신 이상한 값으로 연산.
 
 디버그로 확인한 사항:

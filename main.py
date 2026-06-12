@@ -85,7 +85,7 @@ from ui.cache_page import CachePage
 import transformers  # noqa: F401
 
 from core.clip_engine import CLIPEngine
-from core.resnet_engine import ResNetEngine
+from core.duplicate_engine import DuplicateEngine
 from core.video_analyzer import VideoAnalyzer
 from core.cache_manager import CacheManager
 from core.model_updater import ModelUpdateChecker
@@ -122,7 +122,7 @@ def main():
 
     # Create engines
     clip   = CLIPEngine()
-    resnet = ResNetEngine()
+    duplicate = DuplicateEngine()
     video  = VideoAnalyzer(use_gpu=True)
 
     # Create pages
@@ -130,7 +130,7 @@ def main():
     search_page.set_engine(clip)
 
     dup_page = ImageDuplicatePage()
-    dup_page.set_engine(resnet)
+    dup_page.set_engine(duplicate)
 
     video_page = VideoDuplicatePage()
     video_page.set_analyzer(video)
@@ -144,7 +144,7 @@ def main():
     window.add_page(cache_page)
 
     # GPU memory management: only keep active tab's model on GPU
-    window.set_engines([clip, resnet, None, None])
+    window.set_engines([clip, duplicate, None, None])
 
     # After each model finishes loading, offload to CPU if not on active tab
     if search_page._active_thread:
